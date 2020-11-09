@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
+import 'package:quizzler/quiz_brain.dart';
 
 void main() => runApp(Quizzler());
 
@@ -25,6 +27,8 @@ class QuizPage extends StatefulWidget {
 }
 
 class _QuizPageState extends State<QuizPage> {
+  QuizBrain quizBrain = QuizBrain();
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -37,7 +41,7 @@ class _QuizPageState extends State<QuizPage> {
             padding: EdgeInsets.all(10.0),
             child: Center(
               child: Text(
-                'This is where the question text will go.',
+                quizBrain.currentQuestion().questionText,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 25.0,
@@ -62,6 +66,14 @@ class _QuizPageState extends State<QuizPage> {
               ),
               onPressed: () {
                 //The user picked true.
+                setState(() {
+                  quizBrain.verifyUserAnswerAndUpdateScore(true);
+                  if (quizBrain.hasMoreQuestions()) {
+                    quizBrain.moveToNextQuestion();
+                  } else {
+                    showAlert();
+                  }
+                });
               },
             ),
           ),
@@ -80,13 +92,49 @@ class _QuizPageState extends State<QuizPage> {
               ),
               onPressed: () {
                 //The user picked false.
+                setState(() {
+                  quizBrain.verifyUserAnswerAndUpdateScore(false);
+                  if (quizBrain.hasMoreQuestions()) {
+                    quizBrain.moveToNextQuestion();
+                  } else {
+                    showAlert();
+                  }
+                });
               },
             ),
           ),
         ),
-        //TODO: Add a Row here as your score keeper
+        Expanded(
+          child: Row(
+            children: quizBrain.scoreKeeper,
+          ),
+        )
       ],
     );
+  }
+
+  void showAlert() {
+    Alert(
+      context: context,
+      type: AlertType.success,
+      title: "You Completed the Quizzler",
+      desc: "You got ${quizBrain.correctAnswersCount()} answers right!",
+      buttons: [
+        DialogButton(
+          child: Text(
+            "COOL",
+            style: TextStyle(color: Colors.white, fontSize: 20),
+          ),
+          onPressed: () {
+            setState(() {
+              quizBrain.resetScore();
+            });
+            Navigator.pop(context);
+          },
+          width: 120,
+        )
+      ],
+    ).show();
   }
 }
 
